@@ -46,37 +46,15 @@ class StrategyTree extends Component {
         </li>
       );
       const paths = Array.isArray(ruleSetIdMap.paths) ? ruleSetIdMap.paths : [];
-      // if(ruleSetIdMap.paths.length < 1) return;
-      /*let liChildren = paths.map((path, index) => {
-        console.log('path', path);
-        if(path.condition && path.condition.default) {
-          return <li>
-            {/!*<div className="tree-has-condition">
-              score &lt; 50
-            </div>
-            <div className="strategy-text">
-              {path.condition.next}
-            </div>*!/}
-          </li>
-        } else {
-          return <li className="tree-has-child">
-            <div className="tree-has-condition">
-              score &lt; 50
-            </div>
-            <div className="strategy-text">
-              {getObjPropertyByPath(data, path.next)['ruleSetName']}
-            </div>
-            {ren(data, path.next)}
-          </li>
-        }
-      });*/
 
       let hasChild = ruleSetIdMap.paths.length > 1 || !ruleSetIdMap.paths[0].condition.default;
       return (
         <li className='tree-has-child'>
-          <div className="tree-has-condition">
-            score &lt; 50
-          </div>
+          {data.beginRuleSet !== ruleSetID ?
+            <div className="tree-has-condition">
+              score &lt; 50
+            </div> : ''
+          }
           <div className="strategy-text">
             {ruleSetIdMap['ruleSetName']}
           </div>

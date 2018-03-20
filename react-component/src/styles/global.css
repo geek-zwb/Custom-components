@@ -1,0 +1,19 @@
+/*reset css*/
+* {
+    box-sizing: border-box;
+}
+
+ol, ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    font-size: 16px;
+}
+
+/*remove yellow bg in pwd input of chrome*/
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+}

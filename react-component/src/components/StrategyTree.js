@@ -1,6 +1,6 @@
 /**
- * Created by geekzwb on 2018/3/19.
- * What for:
+ * @file
+ * @author Created by geekzwb on 2018/3/23.
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
@@ -17,6 +17,7 @@ function getObjPropertyByPath(obj, path) {
   let result = obj;
   for (let i = 0; i < pathArr.length; i++) {
     if (typeof result[pathArr[i]] === 'undefined') {
+      // console.log(`${Object.keys(obj)} obj has not the path ${path}`);
       result = '';
       break;
     }
@@ -24,45 +25,74 @@ function getObjPropertyByPath(obj, path) {
   }
   return result;
 }
-
+let key = 0;
 class StrategyTree extends Component {
   constructor(props) {
     super(props);
   }
 
   render() {
-    const {data} = this.props;
+    const {data, renderCondition, renderName, renderAddBrotherNode, renderAddChildNode} = this.props;
 
-    function ren(data, ruleSetID) {
+    /**
+     * @param data
+     * @param {ruleSetID, parentRuleSetID, pathIndex} ruleSetID
+     * @param condition
+     * @returns {*}
+     **/
+    function ren(data, {ruleSetID, parentRuleSetID, pathIndex}, condition) {
       // console.log('ruleSetID', ruleSetID);
-      const ruleSetIdMap = getObjPropertyByPath(data, ruleSetID);
-      if (!ruleSetIdMap || typeof ruleSetIdMap !== 'object') return '';
-      if (ruleSetIdMap.text) return (
-        <li>
-          <div className="tree-has-condition">
-            score &lt; 50
-          </div>
-          <div className="strategy-text">{ruleSetIdMap.text}</div>
-        </li>
-      );
-      const paths = Array.isArray(ruleSetIdMap.paths) ? ruleSetIdMap.paths : [];
+      const ruleSetIdObj = getObjPropertyByPath(data, ruleSetID);
+      if (!ruleSetIdObj || typeof ruleSetIdObj !== 'object') return '';
 
-      let hasChild = ruleSetIdMap.paths.length > 1 || !ruleSetIdMap.paths[0].condition.default;
-      return (
-        <li className='tree-has-child'>
-          {data.beginRuleSet !== ruleSetID ?
+      // 走到头了
+      if (ruleSetIdObj.text) {
+        key += 1;
+        return (
+          <li key={key}>
+            {condition &&
             <div className="tree-has-condition">
-              score &lt; 50
-            </div> : ''
+              {typeof renderCondition === 'function' ? renderCondition({ruleSetID, parentRuleSetID}, condition) : condition.toString()}
+            </div>
+            }
+            <div className="strategy-text">
+              {typeof renderName === 'function' ? renderName({ruleSetID, ruleSetIdObj, parentRuleSetID, pathIndex}) : ruleSetIdObj.text}
+
+              {/*增加兄弟节点和子节点*/}
+              <div className="add-brother">
+                {typeof renderAddBrotherNode === 'function' ? renderAddBrotherNode(ruleSetID, ruleSetIdObj, parentRuleSetID) : ''}
+              </div>
+            </div>
+          </li>
+        );
+      }
+      const paths = Array.isArray(ruleSetIdObj.paths) ? ruleSetIdObj.paths : [];
+
+      // let hasChild = ruleSetIdObj.paths.length > 1 || !ruleSetIdObj.paths[0].condition.default;
+      return (
+        <li className='tree-has-child' key={ruleSetID}>
+          {
+            // is the first ruleSet or has condition
+            // data.beginRuleSet !== ruleSetID ?
+            condition &&
+            <div className="tree-has-condition">
+              {typeof renderCondition === 'function' ? renderCondition({ruleSetID, parentRuleSetID}, condition) : condition.toString()}
+            </div>
           }
           <div className="strategy-text">
-            {ruleSetIdMap['ruleSetName']}
+            {typeof renderName === 'function' ? renderName({ruleSetID, ruleSetIdObj, parentRuleSetID, pathIndex}) : ruleSetIdObj['ruleSetName']}
+
+            {/*增加兄弟节点和子节点*/}
+            <div className="add-brother">
+              {typeof renderAddBrotherNode === 'function' ? renderAddBrotherNode(ruleSetID, ruleSetIdObj, parentRuleSetID) : ''}
+            </div>
+            <div className="add-child">
+              {typeof renderAddChildNode === 'function' ? renderAddChildNode(ruleSetID, ruleSetIdObj, parentRuleSetID) : ''}
+            </div>
           </div>
           <ul>
             {paths.map((path, index) => {
-              console.log('path', path);
-              console.log('path.next', path.next);
-              return ren(data, path.next);
+              return ren(data, {ruleSetID: path.next, parentRuleSetID: ruleSetID, pathIndex: index}, path.condition);
             })}
           </ul>
         </li>
@@ -72,90 +102,25 @@ class StrategyTree extends Component {
     const strateTree = (
       <div className="strategy-tree">
         <ul>
-          {ren(data, data.beginRuleSet)}
+          {data.beginRuleSet && ren(data, {ruleSetID: data.beginRuleSet, parentRuleSetID: ''})}
         </ul>
       </div>
     );
 
     return (
-      <div>
-        {strateTree}
-        <div className="strategy-tree">
-          <ul>
-            <li className="tree-has-child">
-              <div className="strategy-text">规则集01</div>
-              <ul>
-                <li className="tree-has-child">
-                  <div className="tree-has-condition">
-                    score &lt; 50
-                  </div>
-                  <div className="strategy-text">
-                    规则集02
-                  </div>
-                  <ul>
-                    <li className="tree-has-child">
-                      <div className="tree-has-condition">
-                        score &lt; 50
-                      </div>
-                      <div className="strategy-text">规则集02-1</div>
-                      <ul>
-                        <li>
-                          <div className="tree-has-condition">
-                            score &lt; 50
-                          </div>
-                          <div className="strategy-text">规则集02-1</div>
-                        </li>
-                        <li>
-                          <div className="tree-has-condition">
-                            score &lt; 50
-                          </div>
-                          <div className="strategy-text">规则集02-2</div>
-                        </li>
-                        <li>
-                          <div className="tree-has-condition">
-                            score &lt; 50
-                          </div>
-                          <div className="strategy-text">规则集02-3</div>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <div className="tree-has-condition">
-                        score &lt; 50
-                      </div>
-                      <div className="strategy-text">规则集02-2</div>
-                    </li>
-                    <li>
-                      <div className="tree-has-condition">
-                        score &lt; 50
-                      </div>
-                      <div className="strategy-text">规则集02-3</div>
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <div className="tree-has-condition">
-                    score &lt; 50
-                  </div>
-                  <div className="strategy-text">规则集04</div>
-                </li>
-                <li>
-                  <div className="tree-has-condition">
-                    score &lt; 50
-                  </div>
-                  <div className="strategy-text">欺诈</div>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    )
+      strateTree
+    );
   }
 }
 
+//renderCondition(condition){}
+//renderName(ruleSetID.ruleSetName || decision1.text){}
 StrategyTree.propTypes = {
   data: PropTypes.object.isRequired,
+  renderCondition: PropTypes.func,
+  renderName: PropTypes.func,
+  renderAddBrotherNode: PropTypes.func,
+  renderAddChildNode: PropTypes.func,
 };
 
 export default StrategyTree;
